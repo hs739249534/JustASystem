@@ -38,19 +38,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
     @Autowired
     UserService userService;
-
-    @Autowired
-    VerificationCodeFilter verificationCodeFilter;
-
-    @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-        auth.userDetailsService(userService);
-    }
-
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
-    }
+//    @Bean
+//    PasswordEncoder passwordEncoder() {
+//        return NoOpPasswordEncoder.getInstance();
+//    }
 
     @Bean
     RoleHierarchy roleHierarchy() {
@@ -59,22 +50,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
         return hierarchy;
     }
 
-    @Autowired
-    DataSource dataSource;
-
     @Override
-    @Bean
-    protected UserDetailsService userDetailsService() {
-        JdbcUserDetailsManager manager = new JdbcUserDetailsManager();
-        manager.setDataSource(dataSource);
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.userDetailsService(userService);
+    }
+
+//    @Autowired
+//    DataSource dataSource;
+//
+//    @Override
+//    @Bean
+//    protected UserDetailsService userDetailsService() {
+//        JdbcUserDetailsManager manager = new JdbcUserDetailsManager();
+//        manager.setDataSource(dataSource);
 //        if (!manager.userExists("fy")) {
 //            manager.createUser(User.withUsername("fy").password("123").roles("admin").build());
 //        }
 //        if (!manager.userExists("user")) {
 //            manager.createUser(User.withUsername("user").password("123").roles("user").build());
 //        }
-        return manager;
-    }
+//        return manager;
+//    }
 
 //    @Override
 //    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
@@ -93,46 +89,46 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
         web.ignoring().antMatchers("/css/**", "/js/**", "/index.html", "/images/**", "/fonts/**", "/favicon.ico", "/verifyCode");
     }
 
-    @Bean
-    LoginFilter loginFilter() throws Exception {
-        LoginFilter loginFilter = new LoginFilter();
-        loginFilter.setAuthenticationSuccessHandler(new AuthenticationSuccessHandler() {
-            @Override
-            public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication authentication) throws IOException, ServletException {
-                resp.setContentType("application/json;charset=utf-8");
-                PrintWriter out = resp.getWriter();
-                RespBean ok = RespBean.ok("登陆成功");
-                out.write(new ObjectMapper().writeValueAsString(ok));
-                out.flush();
-                out.close();
-            }
-        });
-        loginFilter.setAuthenticationFailureHandler(new AuthenticationFailureHandler() {
-            @Override
-            public void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp, AuthenticationException e) throws IOException, ServletException {
-                resp.setContentType("application/json;charset=utf-8");
-                PrintWriter out = resp.getWriter();
-                RespBean respBean = RespBean.error(e.getMessage());
-                if (e instanceof LockedException) {
-                    respBean.setMsg("账户被锁定，请联系管理员!");
-                } else if (e instanceof CredentialsExpiredException) {
-                    respBean.setMsg("密码过期，请联系管理员!");
-                } else if (e instanceof AccountExpiredException) {
-                    respBean.setMsg("账户过期，请联系管理员!");
-                } else if (e instanceof DisabledException) {
-                    respBean.setMsg("账户被禁用，请联系管理员!");
-                } else if (e instanceof BadCredentialsException) {
-                    respBean.setMsg("用户名或者密码输入错误，请重新输入!");
-                }
-                out.write(new ObjectMapper().writeValueAsString(respBean));
-                out.flush();
-                out.close();
-            }
-        });
-        loginFilter.setFilterProcessesUrl("/doLogin");
-        loginFilter.setAuthenticationManager(authenticationManagerBean());
-        return loginFilter;
-    }
+//    @Bean
+//    LoginFilter loginFilter() throws Exception {
+//        LoginFilter loginFilter = new LoginFilter();
+//        loginFilter.setAuthenticationSuccessHandler(new AuthenticationSuccessHandler() {
+//            @Override
+//            public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication authentication) throws IOException, ServletException {
+//                resp.setContentType("application/json;charset=utf-8");
+//                PrintWriter out = resp.getWriter();
+//                RespBean ok = RespBean.ok("登陆成功");
+//                out.write(new ObjectMapper().writeValueAsString(ok));
+//                out.flush();
+//                out.close();
+//            }
+//        });
+//        loginFilter.setAuthenticationFailureHandler(new AuthenticationFailureHandler() {
+//            @Override
+//            public void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp, AuthenticationException e) throws IOException, ServletException {
+//                resp.setContentType("application/json;charset=utf-8");
+//                PrintWriter out = resp.getWriter();
+//                RespBean respBean = RespBean.error(e.getMessage());
+//                if (e instanceof LockedException) {
+//                    respBean.setMsg("账户被锁定，请联系管理员!");
+//                } else if (e instanceof CredentialsExpiredException) {
+//                    respBean.setMsg("密码过期，请联系管理员!");
+//                } else if (e instanceof AccountExpiredException) {
+//                    respBean.setMsg("账户过期，请联系管理员!");
+//                } else if (e instanceof DisabledException) {
+//                    respBean.setMsg("账户被禁用，请联系管理员!");
+//                } else if (e instanceof BadCredentialsException) {
+//                    respBean.setMsg("用户名或者密码输入错误，请重新输入!");
+//                }
+//                out.write(new ObjectMapper().writeValueAsString(respBean));
+//                out.flush();
+//                out.close();
+//            }
+//        });
+//        loginFilter.setFilterProcessesUrl("/doLogin");
+//        loginFilter.setAuthenticationManager(authenticationManagerBean());
+//        return loginFilter;
+//    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -141,27 +137,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                 .antMatchers("/admin/**").hasRole("admin") // 设置admin访问权限
                 .antMatchers("/user/**").hasRole("user") // 设置user访问权限
                 .anyRequest().authenticated() // 必须放在antMatchers后面
-//                .and()
-//                .formLogin()
-//                .loginPage("/login.html")
-//                .loginProcessingUrl("/doLogin")
-//                .usernameParameter("name")
-//                .passwordParameter("password")
-//                .successHandler((req, resp, authentication) -> {
-//                    resp.setContentType("application/json;charset=utf-8");
-//                    PrintWriter out = resp.getWriter();
-//                    out.write(new ObjectMapper().writeValueAsString(authentication.getPrincipal()));
-//                    out.flush();
-//                    out.close();
-//                })
-//                .failureHandler((req, resp, exception) -> {
-//                    resp.setContentType("application/json;charset=utf-8");
-//                    PrintWriter out = resp.getWriter();
-//                    out.write(new ObjectMapper().writeValueAsString(exception.getMessage()));
-//                    out.flush();
-//                    out.close();
-//                })
-//                .permitAll() // 放行相关url
+                .and()
+                .formLogin()
+                .loginProcessingUrl("/doLogin")
+                .successHandler((req, resp, authentication) -> {
+                    Object principal = authentication.getPrincipal();
+                    resp.setContentType("application/json;charset=utf-8");
+                    PrintWriter out = resp.getWriter();
+                    out.write(new ObjectMapper().writeValueAsString(principal));
+                    out.flush();
+                    out.close();
+                })
+                .failureHandler((req, resp, exception) -> {
+                    resp.setContentType("application/json;charset=utf-8");
+                    PrintWriter out = resp.getWriter();
+                    out.write(exception.getMessage());
+                    out.flush();
+                    out.close();
+                })
+                .permitAll() // 放行相关url
                 .and()
                 .logout()
                 .logoutUrl("/logout") // 默认的get方法注销
@@ -172,7 +166,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                 .logoutSuccessHandler((req, resp, authentication) -> {
                     resp.setContentType("application/json;charset=utf-8");
                     PrintWriter out = resp.getWriter();
-                    out.write(new ObjectMapper().writeValueAsString("注销登录成功"));
+                    out.write("注销成功");
                     out.flush();
                     out.close();
                 })
@@ -184,11 +178,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
                     resp.setContentType("application/json;charset=utf-8");
                     resp.setStatus(401); // 设置状态码为401
                     PrintWriter out = resp.getWriter();
-                    out.write(new ObjectMapper().writeValueAsString("尚未登录，请登录"));
+                    out.write("尚未登录，请登录");
                     out.flush();
                     out.close();
                 });
-        http.addFilterAfter(loginFilter(), UsernamePasswordAuthenticationFilter.class);
+//        http.addFilterAfter(loginFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
 }

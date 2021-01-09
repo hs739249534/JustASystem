@@ -10,6 +10,7 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -55,5 +56,11 @@ public class UserController {
     @PostMapping("/changePassword")
     public RespBean changePassword(@RequestParam Long id, @RequestParam String password) {
         return userService.changePassword(id, password);
+    }
+
+    @ApiOperation(value = "批量导入用户信息")
+    @PostMapping("/addManyUserInfo")
+    public RespBean addManyUserInfo(@RequestParam("file") MultipartFile file) {
+        return userService.addManyUserInfo(file);
     }
 }

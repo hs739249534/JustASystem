@@ -1,5 +1,7 @@
 package com.neuqsoft.justAsystem.service;
 
+import cn.hutool.poi.excel.ExcelReader;
+import cn.hutool.poi.excel.ExcelUtil;
 import com.neuqsoft.justAsystem.dao.UserDao;
 import com.neuqsoft.justAsystem.dto.RegisterDto;
 import com.neuqsoft.justAsystem.dto.UserInfoDto;
@@ -11,7 +13,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -93,6 +100,37 @@ public class UserService implements UserDetailsService{
         }
         userDao.save(user);
         return RespBean.ok("修改成功");
+    }
+
+    public RespBean addManyUserInfo(MultipartFile file) {
+        InputStream in = null;
+        try {
+            in = new ByteArrayInputStream(file.getBytes());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ExcelReader reader = ExcelUtil.getReader(in, 0);
+        List<User> userAuths = reader.readAll(User.class);
+        System.out.println("file处理：\n"+userAuths);
+        userAuths.forEach(userAuth -> {
+//            userAuth.setCreateTime(DateUtil.now());
+//            userAuth.setUserId(UUID.fastUUID().toString(true));
+            String email=userAuth.getEmail();
+            String username=email.substring(0, email.indexOf("@"));
+            userAuth.setUsername(username);
+            userAuth.setAccountNonExpired(true);
+            userAuth.setAccountNonLocked(true);
+            userAuth.setCredentialsNonExpired(true);
+            userAuth.setEnabled(true);
+            List<Role> rs1 = new ArrayList<>();
+            Role r1 = new Role();
+            r1.setName("ROLE_user");
+            r1.setNameZh("普通用户");
+            rs1.add(r1);
+            userAuth.setRoles(rs1);
+        });
+        userDao.saveAll(userAuths);
+        return RespBean.ok("批量导入成功");
     }
 
 }

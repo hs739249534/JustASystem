@@ -86,7 +86,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter{
 
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/css/**", "/js/**", "/index.html", "/images/**", "/fonts/**", "/favicon.ico", "/verifyCode", "/api/user/register");
+        web.ignoring().antMatchers("/css/**", "/js/**", "/index.html", "/images/**", "/fonts/**", "/favicon.ico", "/verifyCode", "/api/user/register",
+                "/swagger-ui.html",
+                "/v2/api-docs", // swagger api json
+                "/swagger-resources/configuration/ui", // 用来获取支持的动作
+                "/swagger-resources", // 用来获取api-docs的URI
+                "/swagger-resources/configuration/security", // 安全选项
+                "/swagger-resources/**",
+                "/webjars/**");
     }
 
     @Bean
